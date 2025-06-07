@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BLOCKSHOOTER</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    h1 {
+      padding-top: 20px;
+      color: #333;
+    }
+
+    p {
+      color: #555;
+    }
+
+    canvas {
+      background-color: black;
+      display: block;
+      margin: 20px auto;
+      border: 4px solid #ccc;
+    }
+
+    #startButton {
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: yellow;
+      color: black;
+      font-size: 24px;
+      font-weight: bold;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      cursor: pointer;
+      z-index: 2;
+      transition: background-color 0.3s;
+      text-transform: uppercase;
+    }
+
+    #startButton:hover {
+      background-color: gold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>WELCOME TO BLOCKSHOOTER</h1>
+  <p>Use Arrow Keys to move, Spacebar to shoot!</p>
+
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <button id="startButton">Click to Start</button>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const SCREEN_WIDTH = canvas.width;
+    const SCREEN_HEIGHT = canvas.height;
+
+    const COLORS = {
+      RED: 'rgb(255,0,0)',
+      GREEN: 'rgb(0,255,0)',
+      BLUE: 'rgb(0,0,255)',
+      YELLOW: 'rgb(255,255,0)',
+      WHITE: 'rgb(255,255,255)'
+    };
+
+    const BLOCK_COLORS = [COLORS.RED, COLORS.GREEN, COLORS.BLUE, COLORS.YELLOW];
+
+    let keys = {};
+    let gameStarted = false;
+
+    document.addEventListener('keydown', e => {
+      keys[e.code] = true;
+      if (e.code === 'Space') {
+        shootBlock();
+      }
+    });
+
+    document.addEventListener('keyup', e => {
+      keys[e.code] = false;
+    });
+
+    const popSound = new Audio('pop.wav');
+    popSound.load();
+
+    class Shooter {
+      constructor() {
+        this.width = 50;
+        this.height = 50;
+        this.x = SCREEN_WIDTH / 2 - this.width / 2;
+        this.y = SCREEN_HEIGHT - this.height - 10;
+        this.speed = 5;
+        this.color = COLORS.WHITE;
+      }
+
+      update() {
+        if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
+        if (keys['ArrowRight'] && this.x + this.width < SCREEN_WIDTH) this.x += this.speed;
+      }
+
+      draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+      }
+    }
+
+    class Block {
+      constructor(color, x, y, direction = 'down') {
+        this.color = color;
+        this.width = 40;
+        this.height = 40;
+        this.x = x - this.width / 2;
+        this.y = y - this.height / 2;
+        this.direction = direction;
+        this.fallSpeed = 3;
+        this.upSpeed = 5;
+      }
+
+      update() {
+        if (this.direction === 'down') {
+          this.y += this.fallSpeed;
+        } else {
+          this.y -= this.upSpeed;
+        }
+      }
+
+      isOutOfScreen() {
+        return (this.direction === 'down') ? this.y > SCREEN_HEIGHT : this.y + this.height < 0;
+      }
+
+      draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+      }
+    }
+
+    let shooter = new Shooter();
+    let fallingBlocks = [];
+    let shotBlocks = [];
+    let score = 0;
+    let highScore = 0;
+    let lastBlockTime = 0;
+    const blockInterval = 3000;
+    let lastShotTime = 0;
+    const shotCooldown = 1000;
+    let flashStartTime = 0;
+    const flashDuration = 100;
+    let isFlashing = false;
+
+    function rectsCollide(a, b) {
+      return !(a.x > b.x + b.width ||
+               a.x + a.width < b.x ||
+               a.y > b.y + b.height ||
+               a.y + a.height < b.y);
+    }
+
+    function shootBlock() {
+      const now = Date.now();
+      if (now - lastShotTime < shotCooldown || !gameStarted) return;
+      lastShotTime = now;
+
+      const x = shooter.x + shooter.width / 2;
+      const y = shooter.y;
+      const color = BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
+      const block = new Block(color, x, y, 'up');
+      shotBlocks.push(block);
+
+      popSound.currentTime = 0;
+      popSound.play();
+    }
+
+    function spawnBlock() {
+      const x = Math.random() * (SCREEN_WIDTH - 40) + 20;
+      const y = -50;
+      const color = BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
+      fallingBlocks.push(new Block(color, x, y, 'down'));
+    }
+
+    function update() {
+      if (!gameStarted) return;
+
+      shooter.update();
+
+      const now = Date.now();
+      if (now - lastBlockTime > blockInterval) {
+        spawnBlock();
+        lastBlockTime = now;
+      }
+
+      fallingBlocks = fallingBlocks.filter(block => {
+        block.update();
+        if (block.isOutOfScreen()) {
+          score = 0;
+          flashStartTime = now;
+          isFlashing = true;
+          return false;
+        }
+        return true;
+      });
+
+      shotBlocks = shotBlocks.filter(block => {
+        block.update();
+        return !block.isOutOfScreen();
+      });
+
+      shotBlocks.forEach((shotBlock, si) => {
+        fallingBlocks.forEach((fallBlock, fi) => {
+          if (rectsCollide(shotBlock, fallBlock)) {
+            fallingBlocks.splice(fi, 1);
+            shotBlocks.splice(si, 1);
+            score++;
+            if (score > highScore) highScore = score;
+          }
+        });
+      });
+
+      if (isFlashing && now - flashStartTime > flashDuration) {
+        isFlashing = false;
+      }
+    }
+
+    function draw() {
+      ctx.fillStyle = isFlashing ? COLORS.RED : 'black';
+      ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+      if (!gameStarted) {
+        // Only show title on start screen
+        ctx.fillStyle = COLORS.WHITE;
+        ctx.font = '72px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('BLOCKSHOOTER', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50);
+        return;
+      }
+
+      shooter.draw();
+      fallingBlocks.forEach(block => block.draw());
+      shotBlocks.forEach(block => block.draw());
+
+      // Scores
+      ctx.fillStyle = COLORS.YELLOW;
+      ctx.font = '36px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText(`Score: ${score}`, SCREEN_WIDTH - 200, 40);
+      ctx.fillText(`High Score: ${highScore}`, 20, 40);
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    document.getElementById('startButton').addEventListener('click', () => {
+      gameStarted = true;
+      document.getElementById('startButton').style.display = 'none';
+    });
+
+    gameLoop();
+  </script>
+</body>
+</html>
