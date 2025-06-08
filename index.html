@@ -5,32 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>BLOCKSHOOTER</title>
   <style>
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      -moz-user-select: none;
+      touch-action: manipulation;
+    }
+
     body {
       margin: 0;
       padding: 0;
       background-color: white;
       font-family: Arial, sans-serif;
       text-align: center;
+      -webkit-touch-callout: none;
     }
-    <style>
-  * {
-    user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    -moz-user-select: none;
-    touch-action: manipulation;
-  }
-
-  body {
-    -webkit-touch-callout: none; /* iOS long press menu */
-    margin: 0;
-  }
-
-  button, canvas {
-    -webkit-touch-callout: none;
-    user-select: none;
-  }
-</style>
 
     h1 {
       padding-top: 20px;
@@ -48,6 +38,7 @@
       border: 4px solid #ccc;
       max-width: 100%;
       height: auto;
+      touch-action: none;
     }
 
     #startButton {
@@ -78,7 +69,6 @@
       position: fixed;
       bottom: 10px;
       width: 100%;
-      display: flex;
       justify-content: space-around;
       padding: 10px;
       background-color: rgba(255, 255, 255, 0.9);
@@ -86,15 +76,10 @@
     }
 
     .control-btn {
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-      touch-action: manipulation;
-      outline: none;
       flex: 1;
       margin: 5px;
       font-size: 48px;
-      padding: 48px;
+      padding: 32px;
       border-radius: 10px;
       border: none;
       background-color: yellow;
@@ -327,18 +312,36 @@
     });
 
     // Mobile control handlers
-    document.getElementById('leftBtn').addEventListener('touchstart', () => keys['ArrowLeft'] = true);
-    document.getElementById('leftBtn').addEventListener('touchend', () => keys['ArrowLeft'] = false);
-    document.getElementById('rightBtn').addEventListener('touchstart', () => keys['ArrowRight'] = true);
-    document.getElementById('rightBtn').addEventListener('touchend', () => keys['ArrowRight'] = false);
-    document.getElementById('shootBtn').addEventListener('touchstart', shootBlock);
+    document.getElementById('leftBtn').addEventListener('touchstart', e => {
+      e.preventDefault();
+      keys['ArrowLeft'] = true;
+    });
+    document.getElementById('leftBtn').addEventListener('touchend', e => {
+      e.preventDefault();
+      keys['ArrowLeft'] = false;
+    });
+    document.getElementById('rightBtn').addEventListener('touchstart', e => {
+      e.preventDefault();
+      keys['ArrowRight'] = true;
+    });
+    document.getElementById('rightBtn').addEventListener('touchend', e => {
+      e.preventDefault();
+      keys['ArrowRight'] = false;
+    });
+    document.getElementById('shootBtn').addEventListener('touchstart', e => {
+      e.preventDefault();
+      shootBlock();
+    });
 
-    // Prevent focus/clipboard popup
-    const buttons = document.querySelectorAll('.control-btn');
-    buttons.forEach(btn => {
-      btn.addEventListener('touchstart', () => {
-        btn.blur(); // Removes focus that might cause clipboard
-      });
+    // Clipboard prevention
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
+    document.addEventListener('mousedown', e => e.preventDefault());
+
+    document.querySelectorAll('button').forEach(btn => {
+      btn.setAttribute('contenteditable', 'false');
+      btn.setAttribute('tabindex', '-1');
+      btn.addEventListener('focus', e => e.target.blur());
     });
 
     gameLoop();
