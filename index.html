@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>BLOCKSHOOTER</title>
   <style>
     body {
@@ -14,33 +14,32 @@
     }
 
     h1 {
-      margin-top: 10px;
-      font-size: 24px;
+      padding-top: 20px;
       color: #333;
     }
 
     p {
       color: #555;
-      font-size: 16px;
     }
 
     canvas {
       background-color: black;
       display: block;
-      margin: 10px auto;
+      margin: 20px auto;
       border: 4px solid #ccc;
-      width: 100vmin;
-      height: 100vmin;
     }
 
     #startButton {
-      margin-top: 10px;
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background-color: yellow;
       color: black;
-      font-size: 20px;
+      font-size: 24px;
       font-weight: bold;
       border: none;
-      padding: 12px 24px;
+      padding: 16px 32px;
       border-radius: 12px;
       cursor: pointer;
       z-index: 2;
@@ -51,61 +50,22 @@
     #startButton:hover {
       background-color: gold;
     }
-
-    .mobile-controls {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin-top: 10px;
-    }
-
-    .mobile-button {
-      font-size: 20px;
-      padding: 12px;
-      border-radius: 10px;
-      background-color: #eee;
-      border: 2px solid #ccc;
-      cursor: pointer;
-      flex: 1;
-    }
-
-    @media (min-width: 768px) {
-      .mobile-controls {
-        display: none;
-      }
-    }
   </style>
 </head>
 <body>
 
-  <h1>BLOCKSHOOTER</h1>
-  <p>Use Arrow Keys or Touch Controls</p>
+  <h1>WELCOME TO BLOCKSHOOTER</h1>
+  <p>Use Arrow Keys to move, Spacebar to shoot!</p>
 
-  <canvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
   <button id="startButton">Click to Start</button>
-
-  <!-- Mobile Controls -->
-  <div class="mobile-controls" id="mobileControls" style="display: none;">
-    <button class="mobile-button" id="leftBtn">←</button>
-    <button class="mobile-button" id="shootBtn">Shoot</button>
-    <button class="mobile-button" id="rightBtn">→</button>
-  </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    function resizeCanvasToSquare() {
-      const minSize = Math.min(window.innerWidth, window.innerHeight);
-      canvas.width = minSize;
-      canvas.height = minSize;
-    }
-
-    window.addEventListener('load', resizeCanvasToSquare);
-    window.addEventListener('resize', resizeCanvasToSquare);
-
-    const SCREEN_WIDTH = () => canvas.width;
-    const SCREEN_HEIGHT = () => canvas.height;
+    const SCREEN_WIDTH = canvas.width;
+    const SCREEN_HEIGHT = canvas.height;
 
     const COLORS = {
       RED: 'rgb(255,0,0)',
@@ -122,42 +82,31 @@
 
     document.addEventListener('keydown', e => {
       keys[e.code] = true;
-      if (e.code === 'Space') shootBlock();
+      if (e.code === 'Space') {
+        shootBlock();
+      }
     });
 
     document.addEventListener('keyup', e => {
       keys[e.code] = false;
     });
 
-    // Touch control state
-    let movingLeft = false;
-    let movingRight = false;
-
-    // Touch buttons
-    document.getElementById('leftBtn').addEventListener('touchstart', () => movingLeft = true);
-    document.getElementById('leftBtn').addEventListener('touchend', () => movingLeft = false);
-
-    document.getElementById('rightBtn').addEventListener('touchstart', () => movingRight = true);
-    document.getElementById('rightBtn').addEventListener('touchend', () => movingRight = false);
-
-    document.getElementById('shootBtn').addEventListener('touchstart', () => shootBlock());
-
     const popSound = new Audio('pop.wav');
+    popSound.load();
 
     class Shooter {
       constructor() {
         this.width = 50;
         this.height = 50;
-        this.x = SCREEN_WIDTH() / 2 - this.width / 2;
-        this.y = SCREEN_HEIGHT() - this.height - 10;
+        this.x = SCREEN_WIDTH / 2 - this.width / 2;
+        this.y = SCREEN_HEIGHT - this.height - 10;
         this.speed = 5;
         this.color = COLORS.WHITE;
       }
 
       update() {
-        if (keys['ArrowLeft'] || movingLeft) this.x -= this.speed;
-        if (keys['ArrowRight'] || movingRight) this.x += this.speed;
-        this.x = Math.max(0, Math.min(SCREEN_WIDTH() - this.width, this.x));
+        if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
+        if (keys['ArrowRight'] && this.x + this.width < SCREEN_WIDTH) this.x += this.speed;
       }
 
       draw() {
@@ -187,7 +136,7 @@
       }
 
       isOutOfScreen() {
-        return (this.direction === 'down') ? this.y > SCREEN_HEIGHT() : this.y + this.height < 0;
+        return (this.direction === 'down') ? this.y > SCREEN_HEIGHT : this.y + this.height < 0;
       }
 
       draw() {
@@ -232,7 +181,7 @@
     }
 
     function spawnBlock() {
-      const x = Math.random() * (SCREEN_WIDTH() - 40) + 20;
+      const x = Math.random() * (SCREEN_WIDTH - 40) + 20;
       const y = -50;
       const color = BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
       fallingBlocks.push(new Block(color, x, y, 'down'));
@@ -283,14 +232,15 @@
 
     function draw() {
       ctx.fillStyle = isFlashing ? COLORS.RED : 'black';
-      ctx.fillRect(0, 0, SCREEN_WIDTH(), SCREEN_HEIGHT());
+      ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
       if (!gameStarted) {
+        // Only show title on start screen
         ctx.fillStyle = COLORS.WHITE;
-        ctx.font = '48px Arial';
+        ctx.font = '72px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('BLOCKSHOOTER', SCREEN_WIDTH() / 2, SCREEN_HEIGHT() / 2 - 40);
+        ctx.fillText('BLOCKSHOOTER', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50);
         return;
       }
 
@@ -298,11 +248,12 @@
       fallingBlocks.forEach(block => block.draw());
       shotBlocks.forEach(block => block.draw());
 
+      // Scores
       ctx.fillStyle = COLORS.YELLOW;
-      ctx.font = '24px Arial';
+      ctx.font = '36px Arial';
       ctx.textAlign = 'left';
-      ctx.fillText(`Score: ${score}`, 20, 30);
-      ctx.fillText(`High Score: ${highScore}`, SCREEN_WIDTH() - 180, 30);
+      ctx.fillText(`Score: ${score}`, SCREEN_WIDTH - 200, 40);
+      ctx.fillText(`High Score: ${highScore}`, 20, 40);
     }
 
     function gameLoop() {
@@ -314,7 +265,6 @@
     document.getElementById('startButton').addEventListener('click', () => {
       gameStarted = true;
       document.getElementById('startButton').style.display = 'none';
-      document.getElementById('mobileControls').style.display = 'flex';
     });
 
     gameLoop();
