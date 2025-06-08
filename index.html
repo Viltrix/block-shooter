@@ -59,36 +59,36 @@
       position: fixed;
       bottom: 10px;
       width: 100%;
-      justify-content: space-around;
+      justify-content: center;
       padding: 10px;
       background-color: rgba(255, 255, 255, 0.9);
       z-index: 3;
       display: flex;
+      gap: 10px;
     }
 
     .control-btn {
-      flex: 1;
-      margin: 5px;
-      font-size: 48px;
-      padding: 32px;
+      flex: none;
+      width: 90px;       /* fixed width */
+      font-size: 28px;
+      padding: 12px 0;
       border-radius: 10px;
       border: none;
       background-color: yellow;
       color: black;
       font-weight: bold;
-      max-width: 33%;
-      box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      white-space: nowrap;
     }
 
-    /* Smaller phones - smaller buttons */
-    @media (max-width: 480px) {
+    @media (max-width: 400px) {
       .control-btn {
-        font-size: 40px;
-        padding: 20px 0;
+        width: 70px;
+        font-size: 22px;
+        padding: 10px 0;
       }
     }
 
@@ -316,7 +316,7 @@
       document.getElementById('mobileControls').style.display = 'flex';
     });
 
-    // Mobile control handlers
+    // Mobile control handlers with preventDefault to stop clipboard on mobile
     document.getElementById('leftBtn').addEventListener('touchstart', e => {
       e.preventDefault();
       keys['ArrowLeft'] = true;
