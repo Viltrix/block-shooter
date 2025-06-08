@@ -5,21 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>BLOCKSHOOTER</title>
   <style>
-    * {
-      user-select: none;
-      -webkit-user-select: none;
-      -ms-user-select: none;
-      -moz-user-select: none;
-      touch-action: manipulation;
-    }
-
     body {
       margin: 0;
       padding: 0;
       background-color: white;
       font-family: Arial, sans-serif;
       text-align: center;
-      -webkit-touch-callout: none;
     }
 
     h1 {
@@ -38,7 +29,6 @@
       border: 4px solid #ccc;
       max-width: 100%;
       height: auto;
-      touch-action: none;
     }
 
     #startButton {
@@ -73,6 +63,7 @@
       padding: 10px;
       background-color: rgba(255, 255, 255, 0.9);
       z-index: 3;
+      display: flex;
     }
 
     .control-btn {
@@ -85,6 +76,20 @@
       background-color: yellow;
       color: black;
       font-weight: bold;
+      max-width: 33%;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    /* Smaller phones - smaller buttons */
+    @media (max-width: 480px) {
+      .control-btn {
+        font-size: 40px;
+        padding: 20px 0;
+      }
     }
 
     /* Hide mobile controls on desktop */
@@ -331,17 +336,6 @@
     document.getElementById('shootBtn').addEventListener('touchstart', e => {
       e.preventDefault();
       shootBlock();
-    });
-
-    // Clipboard prevention
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('selectstart', e => e.preventDefault());
-    document.addEventListener('mousedown', e => e.preventDefault());
-
-    document.querySelectorAll('button').forEach(btn => {
-      btn.setAttribute('contenteditable', 'false');
-      btn.setAttribute('tabindex', '-1');
-      btn.addEventListener('focus', e => e.target.blur());
     });
 
     gameLoop();
