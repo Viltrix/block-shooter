@@ -27,6 +27,8 @@
       display: block;
       margin: 20px auto;
       border: 4px solid #ccc;
+      max-width: 100%;
+      height: auto;
     }
 
     #startButton {
@@ -50,6 +52,49 @@
     #startButton:hover {
       background-color: gold;
     }
+
+    /* Mobile controls container */
+    #mobileControls {
+      display: none;
+      width: 100%;
+      max-width: 800px;
+      margin: 10px auto 30px;
+      text-align: center;
+      user-select: none;
+    }
+
+    /* Buttons styling */
+    .control-btn {
+      background-color: yellow;
+      color: black;
+      font-size: 24px;
+      font-weight: bold;
+      border: none;
+      padding: 20px 30px;
+      margin: 0 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100px;
+      max-width: 30vw;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: background-color 0.3s;
+    }
+    .control-btn:active {
+      background-color: gold;
+    }
+
+    /* Show mobile controls only on screens less than 768px wide */
+    @media (max-width: 767px) {
+      #mobileControls {
+        display: block;
+      }
+      /* Hide start button on mobile to avoid overlap */
+      #startButton {
+        position: static;
+        transform: none;
+        margin: 20px auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -59,6 +104,13 @@
 
   <canvas id="gameCanvas" width="800" height="600"></canvas>
   <button id="startButton">Click to Start</button>
+
+  <!-- Mobile controls -->
+  <div id="mobileControls">
+    <button id="leftBtn" class="control-btn">◀️ Left</button>
+    <button id="shootBtn" class="control-btn">🔥 Shoot</button>
+    <button id="rightBtn" class="control-btn">▶️ Right</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
@@ -80,6 +132,7 @@
     let keys = {};
     let gameStarted = false;
 
+    // Keyboard events
     document.addEventListener('keydown', e => {
       keys[e.code] = true;
       if (e.code === 'Space') {
@@ -91,6 +144,62 @@
       keys[e.code] = false;
     });
 
+    // Mobile buttons
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const shootBtn = document.getElementById('shootBtn');
+
+    let leftPressed = false;
+    let rightPressed = false;
+
+    leftBtn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      leftPressed = true;
+    });
+    leftBtn.addEventListener('touchend', e => {
+      e.preventDefault();
+      leftPressed = false;
+    });
+
+    rightBtn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      rightPressed = true;
+    });
+    rightBtn.addEventListener('touchend', e => {
+      e.preventDefault();
+      rightPressed = false;
+    });
+
+    shootBtn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      shootBlock();
+    });
+
+    // Also support mouse clicks for desktop testing
+    leftBtn.addEventListener('mousedown', e => {
+      e.preventDefault();
+      leftPressed = true;
+    });
+    leftBtn.addEventListener('mouseup', e => {
+      e.preventDefault();
+      leftPressed = false;
+    });
+
+    rightBtn.addEventListener('mousedown', e => {
+      e.preventDefault();
+      rightPressed = true;
+    });
+    rightBtn.addEventListener('mouseup', e => {
+      e.preventDefault();
+      rightPressed = false;
+    });
+
+    shootBtn.addEventListener('mousedown', e => {
+      e.preventDefault();
+      shootBlock();
+    });
+
+    // Pop sound
     const popSound = new Audio('pop.wav');
     popSound.load();
 
@@ -105,8 +214,8 @@
       }
 
       update() {
-        if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
-        if (keys['ArrowRight'] && this.x + this.width < SCREEN_WIDTH) this.x += this.speed;
+        if ((keys['ArrowLeft'] || leftPressed) && this.x > 0) this.x -= this.speed;
+        if ((keys['ArrowRight'] || rightPressed) && this.x + this.width < SCREEN_WIDTH) this.x += this.speed;
       }
 
       draw() {
@@ -235,7 +344,6 @@
       ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
       if (!gameStarted) {
-        // Only show title on start screen
         ctx.fillStyle = COLORS.WHITE;
         ctx.font = '72px Arial';
         ctx.textAlign = 'center';
@@ -248,7 +356,6 @@
       fallingBlocks.forEach(block => block.draw());
       shotBlocks.forEach(block => block.draw());
 
-      // Scores
       ctx.fillStyle = COLORS.YELLOW;
       ctx.font = '36px Arial';
       ctx.textAlign = 'left';
