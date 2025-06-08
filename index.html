@@ -53,46 +53,35 @@
       background-color: gold;
     }
 
-    /* Mobile controls container */
+    /* Mobile controls */
     #mobileControls {
       display: none;
+      position: fixed;
+      bottom: 10px;
       width: 100%;
-      max-width: 800px;
-      margin: 10px auto 30px;
-      text-align: center;
-      user-select: none;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.9);
+      z-index: 3;
     }
 
-    /* Buttons styling */
     .control-btn {
+      flex: 1;
+      margin: 5px;
+      font-size: 24px;
+      padding: 16px;
+      border-radius: 10px;
+      border: none;
       background-color: yellow;
       color: black;
-      font-size: 24px;
       font-weight: bold;
-      border: none;
-      padding: 20px 30px;
-      margin: 0 10px;
-      border-radius: 12px;
-      cursor: pointer;
-      width: 100px;
-      max-width: 30vw;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      transition: background-color 0.3s;
-    }
-    .control-btn:active {
-      background-color: gold;
     }
 
-    /* Show mobile controls only on screens less than 768px wide */
-    @media (max-width: 767px) {
+    /* Hide mobile controls on desktop */
+    @media (min-width: 768px) {
       #mobileControls {
-        display: block;
-      }
-      /* Hide start button on mobile to avoid overlap */
-      #startButton {
-        position: static;
-        transform: none;
-        margin: 20px auto;
+        display: none !important;
       }
     }
   </style>
@@ -105,19 +94,19 @@
   <canvas id="gameCanvas" width="800" height="600"></canvas>
   <button id="startButton">Click to Start</button>
 
-  <!-- Mobile controls -->
+  <!-- Mobile Controls -->
   <div id="mobileControls">
-    <button id="leftBtn" class="control-btn">◀️ Left</button>
-    <button id="shootBtn" class="control-btn">Shoot</button>
-    <button id="rightBtn" class="control-btn">▶️ Right</button>
+    <button class="control-btn" id="leftBtn">Left</button>
+    <button class="control-btn" id="shootBtn">Shoot</button>
+    <button class="control-btn" id="rightBtn">Right</button>
   </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    const SCREEN_WIDTH = canvas.width;
-    const SCREEN_HEIGHT = canvas.height;
+    let SCREEN_WIDTH = canvas.width;
+    let SCREEN_HEIGHT = canvas.height;
 
     const COLORS = {
       RED: 'rgb(255,0,0)',
@@ -132,74 +121,15 @@
     let keys = {};
     let gameStarted = false;
 
-    // Keyboard events
     document.addEventListener('keydown', e => {
       keys[e.code] = true;
-      if (e.code === 'Space') {
-        shootBlock();
-      }
+      if (e.code === 'Space') shootBlock();
     });
 
     document.addEventListener('keyup', e => {
       keys[e.code] = false;
     });
 
-    // Mobile buttons
-    const leftBtn = document.getElementById('leftBtn');
-    const rightBtn = document.getElementById('rightBtn');
-    const shootBtn = document.getElementById('shootBtn');
-
-    let leftPressed = false;
-    let rightPressed = false;
-
-    leftBtn.addEventListener('touchstart', e => {
-      e.preventDefault();
-      leftPressed = true;
-    });
-    leftBtn.addEventListener('touchend', e => {
-      e.preventDefault();
-      leftPressed = false;
-    });
-
-    rightBtn.addEventListener('touchstart', e => {
-      e.preventDefault();
-      rightPressed = true;
-    });
-    rightBtn.addEventListener('touchend', e => {
-      e.preventDefault();
-      rightPressed = false;
-    });
-
-    shootBtn.addEventListener('touchstart', e => {
-      e.preventDefault();
-      shootBlock();
-    });
-
-    // Also support mouse clicks for desktop testing
-    leftBtn.addEventListener('mousedown', e => {
-      e.preventDefault();
-      leftPressed = true;
-    });
-    leftBtn.addEventListener('mouseup', e => {
-      e.preventDefault();
-      leftPressed = false;
-    });
-
-    rightBtn.addEventListener('mousedown', e => {
-      e.preventDefault();
-      rightPressed = true;
-    });
-    rightBtn.addEventListener('mouseup', e => {
-      e.preventDefault();
-      rightPressed = false;
-    });
-
-    shootBtn.addEventListener('mousedown', e => {
-      e.preventDefault();
-      shootBlock();
-    });
-
-    // Pop sound
     const popSound = new Audio('pop.wav');
     popSound.load();
 
@@ -214,8 +144,8 @@
       }
 
       update() {
-        if ((keys['ArrowLeft'] || leftPressed) && this.x > 0) this.x -= this.speed;
-        if ((keys['ArrowRight'] || rightPressed) && this.x + this.width < SCREEN_WIDTH) this.x += this.speed;
+        if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
+        if (keys['ArrowRight'] && this.x + this.width < SCREEN_WIDTH) this.x += this.speed;
       }
 
       draw() {
@@ -237,11 +167,8 @@
       }
 
       update() {
-        if (this.direction === 'down') {
-          this.y += this.fallSpeed;
-        } else {
-          this.y -= this.upSpeed;
-        }
+        if (this.direction === 'down') this.y += this.fallSpeed;
+        else this.y -= this.upSpeed;
       }
 
       isOutOfScreen() {
@@ -372,7 +299,15 @@
     document.getElementById('startButton').addEventListener('click', () => {
       gameStarted = true;
       document.getElementById('startButton').style.display = 'none';
+      document.getElementById('mobileControls').style.display = 'flex';
     });
+
+    // Mobile control handlers
+    document.getElementById('leftBtn').addEventListener('touchstart', () => keys['ArrowLeft'] = true);
+    document.getElementById('leftBtn').addEventListener('touchend', () => keys['ArrowLeft'] = false);
+    document.getElementById('rightBtn').addEventListener('touchstart', () => keys['ArrowRight'] = true);
+    document.getElementById('rightBtn').addEventListener('touchend', () => keys['ArrowRight'] = false);
+    document.getElementById('shootBtn').addEventListener('touchstart', shootBlock);
 
     gameLoop();
   </script>
