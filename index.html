@@ -50,11 +50,43 @@
     #startButton:hover {
       background-color: gold;
     }
+
+    #mobileControls {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      z-index: 3;
+    }
+
+    #mobileControls button {
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      font-weight: bold;
+      border: none;
+      border-radius: 50%;
+      background-color: yellow;
+      color: black;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    #mobileControls button:active {
+      background-color: gold;
+    }
+
+    @media (min-width: 800px) {
+      #mobileControls {
+        display: none;
+      }
+    }
   </style>
-  
+
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9456767253859853"
      crossorigin="anonymous"></script>
-
 </head>
 <body>
 
@@ -63,6 +95,13 @@
 
   <canvas id="gameCanvas" width="800" height="600"></canvas>
   <button id="startButton">Click to Start</button>
+
+  <!-- Mobile Controls -->
+  <div id="mobileControls">
+    <button id="leftBtn">◀</button>
+    <button id="shootBtn">🔫</button>
+    <button id="rightBtn">▶</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
@@ -218,16 +257,17 @@
         return !block.isOutOfScreen();
       });
 
-      shotBlocks.forEach((shotBlock, si) => {
-        fallingBlocks.forEach((fallBlock, fi) => {
-          if (rectsCollide(shotBlock, fallBlock)) {
+      for (let si = shotBlocks.length - 1; si >= 0; si--) {
+        for (let fi = fallingBlocks.length - 1; fi >= 0; fi--) {
+          if (rectsCollide(shotBlocks[si], fallingBlocks[fi])) {
             fallingBlocks.splice(fi, 1);
             shotBlocks.splice(si, 1);
             score++;
             if (score > highScore) highScore = score;
+            break;
           }
-        });
-      });
+        }
+      }
 
       if (isFlashing && now - flashStartTime > flashDuration) {
         isFlashing = false;
@@ -239,7 +279,6 @@
       ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
       if (!gameStarted) {
-        // Only show title on start screen
         ctx.fillStyle = COLORS.WHITE;
         ctx.font = '72px Arial';
         ctx.textAlign = 'center';
@@ -252,7 +291,6 @@
       fallingBlocks.forEach(block => block.draw());
       shotBlocks.forEach(block => block.draw());
 
-      // Scores
       ctx.fillStyle = COLORS.YELLOW;
       ctx.font = '36px Arial';
       ctx.textAlign = 'left';
@@ -270,6 +308,19 @@
       gameStarted = true;
       document.getElementById('startButton').style.display = 'none';
     });
+
+    // Mobile buttons
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const shootBtn = document.getElementById('shootBtn');
+
+    leftBtn.addEventListener('touchstart', () => keys['ArrowLeft'] = true);
+    leftBtn.addEventListener('touchend', () => keys['ArrowLeft'] = false);
+
+    rightBtn.addEventListener('touchstart', () => keys['ArrowRight'] = true);
+    rightBtn.addEventListener('touchend', () => keys['ArrowRight'] = false);
+
+    shootBtn.addEventListener('touchstart', () => shootBlock());
 
     gameLoop();
   </script>
